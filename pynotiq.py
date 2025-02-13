@@ -48,7 +48,7 @@ def process_queue():
 
     print(f"Messages in queue: {len(queue)}")
     for msg in queue:
-        if not msg["sent"]:  # Only process unsent messages
+        if "sent" not in msg or not msg["sent"]:  # Only process unsent messages
             if send_telegram_message(msg["message"]):
                 msg["sent"] = True  # Mark as sent
                 msg["send_date"] = str(datetime.datetime.now())
