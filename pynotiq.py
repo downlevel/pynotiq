@@ -49,12 +49,12 @@ def process_queue():
     print(f"Messages in queue: {len(queue)}")
     for msg in queue:
         if "sent" not in msg or not msg["sent"]:  # Only process unsent messages
-            if send_telegram_message(msg["message"]):
+            if send_telegram_message(msg["MessageBody"]):
                 msg["sent"] = True  # Mark as sent
                 msg["send_date"] = str(datetime.datetime.now())
-                print(f"Message sent: {msg['message']}")
+                print(f"Message sent: {msg['MessageBody']}")
             else:
-                print(f"Failed to send: {msg['message']}")
+                print(f"Failed to send: {msg['MessageBody']}")
 
     # Save updated queue back to file
     with open(QUEUE_FILE, "w") as f:
