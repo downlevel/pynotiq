@@ -17,7 +17,7 @@ PyNotiQ is a lightweight and efficient Python application that reads messages fr
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/pynotiq.git
+git clone https://github.com/downlevel/pynotiq.git
 cd pynotiq
 ```
 
