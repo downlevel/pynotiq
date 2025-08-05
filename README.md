@@ -2,28 +2,29 @@
 A Python-powered queue-based notification system for Telegram
 
 ## Description
-PyNotiQ is a lightweight and efficient Python application that reads messages from a queue and sends real-time notifications via Telegram. Perfect for alerting systems, deal tracking, and automated messaging.
+PyNotiQ is a lightweight and efficient Python application that reads messages from a queue and sends real-time notifications via Telegram. Built with the PyQueue client library, it supports both local and remote queue management. Perfect for alerting systems, deal tracking, and automated messaging.
 
 ## ✨ Features
-- ✅ Reads from JSON queue
-- ✅ Sends notifications via Telegram
-- ✅ Lightweight & easy to configure
-- ✅ Ideal for automation and alerts
-- ✅ Environment variable support
-- ✅ Command-line argument support
-- ✅ Message tracking (prevents duplicates)
+- ✅ **Local & Remote Queue Support** - Works with both local files and remote PyQueue servers
+- ✅ **Telegram Integration** - Sends notifications via Telegram Bot API
+- ✅ **PyQueue Client** - Built on the robust PyQueue client library
+- ✅ **Flexible Configuration** - Environment variables + command-line arguments
+- ✅ **Message Tracking** - Prevents duplicate messages with sent status tracking
+- ✅ **Multiple Queue Types** - Support for different queue configurations
+- ✅ **Error Handling** - Robust error handling and retry logic
+- ✅ **Easy Automation** - Perfect for scheduled tasks and automation workflows
 
 ## 🚀 Installation
 
 1. Clone the repository:
-```bash
+```powershell
 git clone https://github.com/downlevel/pynotiq.git
 cd pynotiq
 ```
 
 2. Install required dependencies:
-```bash
-pip install requests python-dotenv
+```powershell
+pip install -r requirements.txt
 ```
 
 3. Set up your Telegram bot:
@@ -36,120 +37,172 @@ pip install requests python-dotenv
 ### Method 1: Environment Variables (Recommended)
 Create a `.env` file in the project directory:
 ```env
+# Telegram Configuration
 TELEGRAM_BOT_TOKEN=your_bot_token_here
 TELEGRAM_CHAT_ID=your_chat_id_here
-QUEUE_FILE=queue.json
+
+# Queue Configuration
+QUEUE_FILE_PATH=queue.json
+PYQUEUE_QUEUE_TYPE=local
+PYQUEUE_QUEUE_NAME=my-queue
+PYQUEUE_SERVER_URL=http://localhost:8000
 ```
 
+### Queue Types
+- **Local Queue**: Uses local JSON file for message storage
+- **Remote Queue**: Connects to a PyQueue server for distributed queue management
+
 ### Method 2: Command Line Arguments
-```bash
-python pynotiq.py -t your_bot_token -c your_chat_id -q queue.json
+```powershell
+# Basic usage with local queue
+python pynotiq.py -t your_bot_token -c your_chat_id
+
+# Remote queue configuration
+python pynotiq.py -qt remote -qs http://your-server:8000 -qn your-queue-name
 ```
 
 ## 📖 Usage
 
 ### Basic Usage
-```bash
+```powershell
+# Process queue with default configuration
 python pynotiq.py
 ```
 
-### With Command Line Arguments
-```bash
-# Specify custom queue file
-python pynotiq.py --queue my_messages.json
+### Advanced Usage
+```powershell
+# Local queue with custom file
+python pynotiq.py -qt local -qf my_messages.json
 
-# Override bot token and chat ID
-python pynotiq.py --token YOUR_BOT_TOKEN --chatid YOUR_CHAT_ID
+# Remote queue
+python pynotiq.py -qt remote -qs http://localhost:8000 -qn notifications
 
-# All options together
-python pynotiq.py -t YOUR_BOT_TOKEN -c YOUR_CHAT_ID -q custom_queue.json
+# Override Telegram credentials
+python pynotiq.py -t YOUR_BOT_TOKEN -c YOUR_CHAT_ID
+
+# Complete configuration
+python pynotiq.py -qt remote -qs http://myserver:8000 -qn alerts -t BOT_TOKEN -c CHAT_ID
 ```
 
 ### Command Line Options
-- `-q, --queue`: Queue file path (default: queue.json)
+- `-qt, --queue-type`: Queue type (`local` or `remote`)
+- `-qs, --queue-server`: Queue server URL (for remote queues)
+- `-qn, --queue-name`: Queue name
+- `-qf, --queue`: Queue file path (for local queues)
 - `-t, --token`: Telegram bot token
 - `-c, --chatid`: Telegram chat ID
 - `-h, --help`: Show help message
 
-## 📋 Queue File Format
+## 📦 Dependencies
 
-The queue file should be a JSON array containing message objects. Each message should have:
+- **requests** - HTTP client for Telegram Bot API
+- **python-dotenv** - Environment variable management
+- **pyqueue-client** - Queue management client library
+
+## 📋 Message Format
+
+PyNotiQ uses the PyQueue client library for message management. Messages should follow this structure:
 
 ```json
-[
-    {
-        "Id": "unique_message_id",
-        "Timestamp": "2025-03-06T20:17:38.440609",
-        "MessageBody": "📢 *Your notification message*\n💰 Price: €48.00\n🔗 [Link](https://example.com)"
-    },
-    {
-        "Id": "another_message_id", 
-        "Timestamp": "2025-03-06T20:20:15.123456",
-        "MessageBody": "🚨 Alert: Something important happened!"
+{
+    "id": "unique-message-id",
+    "timestamp": "2025-08-05T14:30:00.000000",
+    "message_body": {
+        "message_text": "📢 *Your notification message*\n💰 Price: €48.00\n🔗 [Link](https://example.com)",
+        "sent": false,
+        "message_type": "alert"
     }
-]
+}
 ```
 
 ### Message Properties
-- `Id`: Unique identifier for the message
-- `Timestamp`: When the message was created
-- `MessageBody`: The actual message text (supports Markdown formatting)
-- `sent`: (Auto-added) Boolean indicating if message was sent
-- `send_date`: (Auto-added) When the message was sent
+- `id`: Unique identifier for the message (UUID recommended)
+- `timestamp`: ISO format timestamp when message was created
+- `message_body.message_text`: The actual message text (supports Telegram Markdown)
+- `message_body.sent`: Boolean indicating if message was sent (auto-managed)
+- `message_body.send_date`: When the message was sent (auto-added)
+- `message_body.message_type`: Optional categorization (alert, deal, report, etc.)
 
 ## 🔄 How It Works
 
-1. PyNotiQ reads the queue file specified (default: `queue.json`)
-2. Processes all unsent messages in the queue
-3. Sends each message to your Telegram chat
-4. Marks messages as sent to prevent duplicates
-5. Updates the queue file with sent status and timestamps
+1. **Initialize**: PyNotiQ connects to the specified queue (local or remote) using PyQueue client
+2. **Fetch Messages**: Retrieves all messages from the queue using `queue.get_messages()`
+3. **Filter Unsent**: Processes only messages where `sent` is `false` or missing
+4. **Send to Telegram**: Uses Telegram Bot API to send each message
+5. **Update Status**: Marks messages as sent and adds send timestamp
+6. **Update Queue**: Uses `queue.update_message()` to persist the sent status
+
+## 🧪 Testing
+
+PyNotiQ includes test utilities to help you validate your setup:
+
+### Add Test Messages
+```powershell
+# Add a single test message (using pyqueue-client)
+python test_pyqueue_client.py
+
+# Add custom message
+python test_pyqueue_client.py add -m "Hello from PyNotiQ!"
+
+# Add multiple test messages
+python test_pyqueue_client.py bulk -n 5
+
+# View current queue
+python test_pyqueue_client.py view
+```
+
+### Complete Test Workflow
+1. Add test messages: `python test_pyqueue_client.py bulk -n 3`
+2. View queue: `python test_pyqueue_client.py view`
+3. Process messages: `python pynotiq.py`
+4. Verify results: `python test_pyqueue_client.py view`
 
 ## 📝 Examples
 
 ### Example 1: Basic Alert
 ```json
-[
-    {
-        "Id": "alert_001",
-        "Timestamp": "2025-08-02T10:30:00.000000",
-        "MessageBody": "🚨 System Alert: Server CPU usage is above 90%"
+{
+    "id": "alert_001",
+    "timestamp": "2025-08-05T10:30:00.000000",
+    "message_body": {
+        "message_text": "🚨 System Alert: Server CPU usage is above 90%",
+        "sent": false,
+        "message_type": "alert"
     }
-]
+}
 ```
 
 ### Example 2: Deal Notification (with Markdown)
 ```json
-[
-    {
-        "Id": "deal_123",
-        "Timestamp": "2025-08-02T14:15:30.000000", 
-        "MessageBody": "📢 *New Deal Found!*\n💰 *Price:* €25.00\n🎯 *Target:* €50.00\n🔗 [View Item](https://example.com/item/123)"
+{
+    "id": "deal_123",
+    "timestamp": "2025-08-05T14:15:30.000000",
+    "message_body": {
+        "message_text": "📢 *New Deal Found!*\n💰 *Price:* €25.00\n🎯 *Target:* €50.00\n🔗 [View Item](https://example.com/item/123)",
+        "sent": false,
+        "message_type": "deal"
     }
-]
+}
 ```
 
-### Example 3: Multiple Messages
+### Example 3: Daily Report
 ```json
-[
-    {
-        "Id": "msg_001",
-        "Timestamp": "2025-08-02T09:00:00.000000",
-        "MessageBody": "☀️ Good morning! Daily backup completed successfully."
-    },
-    {
-        "Id": "msg_002", 
-        "Timestamp": "2025-08-02T09:05:00.000000",
-        "MessageBody": "📊 Yesterday's stats:\n• Sales: €1,250\n• Orders: 45\n• New customers: 12"
+{
+    "id": "report_001",
+    "timestamp": "2025-08-05T09:00:00.000000",
+    "message_body": {
+        "message_text": "📊 *Daily Report*\n• Sales: €1,250\n• Orders: 45\n• New customers: 12\n• System uptime: 99.9%",
+        "sent": false,
+        "message_type": "report"
     }
-]
+}
 ```
 
 ## 🔧 Automation
 
 ### Windows Task Scheduler
 Run PyNotiQ every 5 minutes:
-```bash
+```powershell
 schtasks /create /tn "PyNotiQ" /tr "python C:\path\to\pynotiq.py" /sc minute /mo 5
 ```
 
@@ -159,11 +212,31 @@ Add to crontab for every 5 minutes:
 */5 * * * * cd /path/to/pynotiq && python pynotiq.py
 ```
 
+### Docker Integration
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["python", "pynotiq.py"]
+```
+
 ## 🛡️ Error Handling
 
-- Messages that fail to send remain unmarked and will be retried on next run
-- Invalid queue files are safely ignored
-- Missing environment variables can be overridden with command line arguments
+- **Connection Failures**: Messages remain in queue for retry on next run
+- **Invalid Messages**: Skipped with error logging, other messages continue processing
+- **Missing Configuration**: Falls back to environment variables and config defaults
+- **PyQueue Errors**: Graceful handling of queue client connection issues
+- **Telegram API Errors**: Failed messages remain unmarked for retry
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
