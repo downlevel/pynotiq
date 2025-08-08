@@ -12,5 +12,6 @@ class Config:
     PYQUEUE_SERVER_URL = os.getenv("PYQUEUE_SERVER_URL")
     PYQUEUE_QUEUE_TYPE = os.getenv("PYQUEUE_QUEUE_TYPE", "local")
     PYQUEUE_QUEUE_NAME = os.getenv("PYQUEUE_QUEUE_NAME")
+    PYQUEUE_API_KEY = os.getenv("PYQUEUE_API_KEY")
 
 config = Config()

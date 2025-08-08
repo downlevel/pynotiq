@@ -12,6 +12,7 @@ load_dotenv()
 parser = argparse.ArgumentParser(description="PyNotiQ Configuration")
 parser.add_argument("-qt", "--queue-type", default=config.PYQUEUE_QUEUE_TYPE, help="Queue type( local or remote)")
 parser.add_argument("-qs", "--queue-server", default=config.PYQUEUE_SERVER_URL, help="Queue server URL(leave empty for local queue)")
+parser.add_argument("-qk", "--queue-api-key", default=config.PYQUEUE_API_KEY, help="API key for PyQueue server")
 parser.add_argument("-qn", "--queue-name", default=config.PYQUEUE_QUEUE_NAME, help="Queue name")
 parser.add_argument("-qf", "--queue", default=config.QUEUE_FILE_PATH, help="Queue file path")
 parser.add_argument("-t", "--token", default=config.TELEGRAM_BOT_TOKEN, help="Bot Token")
@@ -34,7 +35,8 @@ def process_queue():
     queue = PyQueue(
             server_url=args.queue_server,
             queue_type=args.queue_type,
-            queue_name=args.queue_name
+            queue_name=args.queue_name,
+            api_key=args.queue_api_key,
         )
     
     print("Processing queue")

@@ -32,6 +32,25 @@ pip install -r requirements.txt
    - Get your bot token
    - Get your chat ID (you can use [@userinfobot](https://t.me/userinfobot))
 
+## 📁 Project Structure
+
+```
+pynotiq/
+├── pynotiq.py              # Main application script
+├── config.py               # Configuration management
+├── test.py                 # Simple testing utility
+├── requirements.txt        # Python dependencies
+├── .env                    # Environment variables (create this)
+├── queue.json             # Local queue file (auto-created)
+└── README.md              # This file
+```
+
+### Key Files
+- **`pynotiq.py`** - Main script that processes the queue and sends Telegram messages
+- **`config.py`** - Handles configuration from environment variables
+- **`test.py`** - Simple test script for adding messages to queue
+- **`.env`** - Your configuration file (you need to create this)
+
 ## ⚙️ Configuration
 
 ### Method 1: Environment Variables (Recommended)
@@ -46,6 +65,7 @@ QUEUE_FILE_PATH=queue.json
 PYQUEUE_QUEUE_TYPE=local
 PYQUEUE_QUEUE_NAME=my-queue
 PYQUEUE_SERVER_URL=http://localhost:8000
+PYQUEUE_API_KEY=your_api_key_here
 ```
 
 ### Queue Types
@@ -58,7 +78,7 @@ PYQUEUE_SERVER_URL=http://localhost:8000
 python pynotiq.py -t your_bot_token -c your_chat_id
 
 # Remote queue configuration
-python pynotiq.py -qt remote -qs http://your-server:8000 -qn your-queue-name
+python pynotiq.py -qt remote -qs http://your-server:8000 -qn your-queue-name -qk your_api_key
 ```
 
 ## 📖 Usage
@@ -87,6 +107,7 @@ python pynotiq.py -qt remote -qs http://myserver:8000 -qn alerts -t BOT_TOKEN -c
 ### Command Line Options
 - `-qt, --queue-type`: Queue type (`local` or `remote`)
 - `-qs, --queue-server`: Queue server URL (for remote queues)
+- `-qk, --queue-api-key`: API key for PyQueue server
 - `-qn, --queue-name`: Queue name
 - `-qf, --queue`: Queue file path (for local queues)
 - `-t, --token`: Telegram bot token
@@ -134,9 +155,18 @@ PyNotiQ uses the PyQueue client library for message management. Messages should 
 
 ## 🧪 Testing
 
-PyNotiQ includes test utilities to help you validate your setup:
+PyNotiQ includes multiple test utilities to help you validate your setup:
 
-### Add Test Messages
+### Quick Testing with test.py
+```powershell
+# Add a single test message
+python test.py
+
+# Add multiple test messages
+python test.py multiple
+```
+
+### Advanced Testing with test_pyqueue_client.py
 ```powershell
 # Add a single test message (using pyqueue-client)
 python test_pyqueue_client.py
@@ -152,10 +182,9 @@ python test_pyqueue_client.py view
 ```
 
 ### Complete Test Workflow
-1. Add test messages: `python test_pyqueue_client.py bulk -n 3`
-2. View queue: `python test_pyqueue_client.py view`
-3. Process messages: `python pynotiq.py`
-4. Verify results: `python test_pyqueue_client.py view`
+1. Add test messages: `python test.py multiple`
+2. Process messages: `python pynotiq.py`
+3. Check your Telegram for received messages
 
 ## 📝 Examples
 
@@ -163,7 +192,7 @@ python test_pyqueue_client.py view
 ```json
 {
     "id": "alert_001",
-    "timestamp": "2025-08-05T10:30:00.000000",
+    "timestamp": "2025-08-09T10:30:00.000000",
     "message_body": {
         "message_text": "🚨 System Alert: Server CPU usage is above 90%",
         "sent": false,
@@ -176,7 +205,7 @@ python test_pyqueue_client.py view
 ```json
 {
     "id": "deal_123",
-    "timestamp": "2025-08-05T14:15:30.000000",
+    "timestamp": "2025-08-09T14:15:30.000000",
     "message_body": {
         "message_text": "📢 *New Deal Found!*\n💰 *Price:* €25.00\n🎯 *Target:* €50.00\n🔗 [View Item](https://example.com/item/123)",
         "sent": false,
@@ -189,7 +218,7 @@ python test_pyqueue_client.py view
 ```json
 {
     "id": "report_001",
-    "timestamp": "2025-08-05T09:00:00.000000",
+    "timestamp": "2025-08-09T09:00:00.000000",
     "message_body": {
         "message_text": "📊 *Daily Report*\n• Sales: €1,250\n• Orders: 45\n• New customers: 12\n• System uptime: 99.9%",
         "sent": false,
